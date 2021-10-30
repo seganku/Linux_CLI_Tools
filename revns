@@ -1,0 +1,75 @@
+#!/usr/bin/perl -w
+#
+# Simple script for DNS queries.
+#
+#  $ revns www.yahoo.com
+#  www.yahoo.com -> 216.115.102.76, 216.115.102.77, 216.115.102.79, 216.115.102.80, 216.115.102.75, 216.115.102.78
+#  216.115.102.76 -> w4.snv.yahoo.com
+#  216.115.102.77 -> w5.snv.yahoo.com
+#  216.115.102.79 -> w7.snv.yahoo.com
+#  216.115.102.80 -> w8.snv.yahoo.com
+#  216.115.102.75 -> w3.snv.yahoo.com
+#  216.115.102.78 -> w6.snv.yahoo.com
+#
+# Montgomery Newcom <mn@zenu.net>
+#
+
+use strict;
+sub usage();
+sub ip2name($);
+sub name2ip($);
+
+$| = 1;
+
+usage unless scalar @ARGV;
+
+foreach my $arg (@ARGV)
+{
+  if ( $arg =~ /^\d+\.\d+\.\d+\.\d+$/ )
+  {
+    my $lookup = ip2name $arg;
+    if (defined $lookup) {
+      print "$arg -> $lookup\n" }
+    else {
+      print "Could not resolve $arg\n" }
+  }
+  else
+  {
+    my @ips = name2ip $arg;
+    if (scalar @ips)
+    {
+      print "$arg -> " . join(", ",@ips) . "\n";
+      foreach my $ip (@ips)
+      {
+        my $lookup = ip2name $ip;
+        if (defined $lookup) {
+          print "$ip -> $lookup\n" }
+        else {
+          print "Could not resolve $ip\n" }
+      }
+    }
+    else {
+      print "Could not resolve $arg\n" }
+  }
+}
+
+
+################################################################################
+
+
+sub usage() {
+  print "\nUsage:\n\nrevns <(host|IP)1> [<(host|IP)2> .. <(host|IP)N>]\n - lookup forward, reverse, and forward again\n\n" }
+
+
+sub ip2name($) {
+  return (gethostbyaddr(pack("C4",split(/\./,$_[0])),2))[0] }
+
+
+sub name2ip($)
+{
+  my @nal = gethostbyname($_[0]);
+  return map { join('.', unpack("C4", $_)) } @nal[4..$#nal];
+}
+
+
+__END__
